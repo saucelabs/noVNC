@@ -363,7 +363,21 @@ Util.decodeUTF8 = function (utf8string) {
     return decodeURIComponent(escape(utf8string));
 };
 
+Util.extend = function (dest, source) {
+    var prop;
 
+    if (source) {
+        for (prop in source) {
+            if (Object.prototype.hasOwnProperty.call(source, prop)) {
+                dest[prop] = source[prop];
+            }
+        }
+    }
+
+    return dest;
+};
+
+Util.noop = function noop() {};
 
 /*
  * Cross-browser routines
@@ -381,7 +395,7 @@ Util.get_include_uri = function () {
 };
 Util._loading_scripts = [];
 Util._pending_scripts = [];
-Util.load_scripts = function (files) {
+Util.load_scripts = function (files, success) {
     "use strict";
     var head = document.getElementsByTagName('head')[0], script,
         ls = Util._loading_scripts, ps = Util._pending_scripts;
@@ -402,9 +416,9 @@ Util.load_scripts = function (files) {
                 //console.log("completed script: " + this.src);
                 ps.splice(ps.indexOf(this), 1);
 
-                // Call window.onscriptsload after last script loads
-                if (ps.length === 0 && window.onscriptsload) {
-                    window.onscriptsload();
+                // Call `success` after last script loads
+                if (ps.length === 0 && success) {
+                    success();
                 }
             }
         }

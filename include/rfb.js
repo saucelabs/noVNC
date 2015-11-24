@@ -26,6 +26,7 @@ var RFB;
         this._rfb_port = 5900;
         this._rfb_password = '';
         this._rfb_path = '';
+        this._rfb_sauce_handshake = '';
 
         this._rfb_state = 'disconnected';
         this._rfb_version = 0;
@@ -183,6 +184,7 @@ var RFB;
         this._sock.on('message', this._handle_message.bind(this));
         this._sock.on('open', function () {
             if (this._rfb_state === 'connect') {
+                this._sock.send_string(this._rfb_sauce_handshake);
                 this._updateState('ProtocolVersion', "Starting VNC handshake");
             } else {
                 this._fail("Got unexpected WebSocket connection");
@@ -229,11 +231,12 @@ var RFB;
 
     RFB.prototype = {
         // Public methods
-        connect: function (host, port, password, path) {
+        connect: function (host, port, password, path, sauce_handshake) {
             this._rfb_host = host;
             this._rfb_port = port;
             this._rfb_password = (password !== undefined) ? password : "";
             this._rfb_path = (path !== undefined) ? path : "";
+            this._rfb_sauce_handshake = sauce_handshake;
 
             if (!this._rfb_host || !this._rfb_port) {
                 return this._fail("Must set host and port");
