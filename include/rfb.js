@@ -49,8 +49,8 @@ var RFB;
 
             // Psuedo-encoding settings
             //['JPEG_quality_lo',    -32 ],
-            ['JPEG_quality_med',     -26 ],
-            //['JPEG_quality_hi',    -23 ],
+            //['JPEG_quality_med',     -26 ],
+            ['JPEG_quality_hi',    -23 ],
             //['compress_lo',       -255 ],
             ['compress_hi',         -247 ],
             ['last_rect',           -224 ],
