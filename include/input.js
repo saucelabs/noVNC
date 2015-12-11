@@ -150,6 +150,30 @@ var Keyboard, Mouse;
     // Mouse event handler
     //
 
+    function batchEventHandlerCalls(fn, timeout, scope) {
+        var callArgs = [], timeoutId = -1;
+
+        return function batchEventHandlerCallsInnner(e) {
+            var args = Array.prototype.slice.call(arguments);
+            var self = scope || this;
+
+            if (timeoutId === -1) {
+                timeoutId = setTimeout(function () {
+                    timeoutId = -1;
+                    callArgs.forEach(function (args) {
+                        fn.apply(self, args);
+                    });
+                    callArgs.length = 0;
+                }, timeout);
+            }
+
+            callArgs.push(args);
+
+            Util.stopEvent(e);
+            return false;
+        };
+    }
+
     Mouse = function (defaults) {
         this._mouseCaptured  = false;
 
@@ -168,7 +192,7 @@ var Keyboard, Mouse;
             'mousedown': this._handleMouseDown.bind(this),
             'mouseup': this._handleMouseUp.bind(this),
             'mousemove': this._handleMouseMove.bind(this),
-            'mousewheel': this._handleMouseWheel.bind(this),
+            'mousewheel': batchEventHandlerCalls(this._handleMouseWheel.bind(this), 200),
             'mousedisable': this._handleMouseDisable.bind(this)
         };
     };
