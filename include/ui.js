@@ -120,7 +120,9 @@
     };
 
     UI.prototype.disconnect = function disconnect() {
-        this.rfb.disconnect();
+        if (this.rfb) {
+            this.rfb.disconnect();
+        }
     };
 
     UI.prototype.updateState = function updateState(rfb, state, oldstate, msg) {
