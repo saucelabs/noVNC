@@ -35,7 +35,7 @@
     function UI() {
         this.rfb_state = null;
         this.rfb = null;
-        this.isTouchDevice = 'ontouchstart' in document.documentElement;
+        this.isTouchDevice = false;  // 'ontouchstart' in document.documentElement;
         /** @type {Number} connection retries counter */
         this.timesRetried = 0;
         /** @type {Boolean} true if `onFailedState()` was called */

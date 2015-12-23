@@ -1258,7 +1258,8 @@ var RFB;
                 this._local_cursor = true;
             } else {
                 Util.Warn("Browser does not support local cursor");
-                this._display.disableLocalCursor();
+                this._local_cursor = false;
+                this._display.defaultCursor();
             }
         }
     };

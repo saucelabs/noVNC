@@ -893,6 +893,6 @@ var Display;
         }
 
         var url = 'data:image/x-icon;base64,' + Base64.encode(cur);
-        target.style.cursor = 'url(' + url + ')' + hotx + ' ' + hoty + ', default';
+        target.style.cursor = 'url(' + url + ')' + hotx + ' ' + hoty + ', auto';
     };
 })();

@@ -356,19 +356,22 @@ var Keyboard, Mouse;
         grab: function () {
             var c = this._target;
 
-            if ('ontouchstart' in document.documentElement) {
-                Util.addEvent(c, 'touchstart', this._eventHandlers.mousedown);
-                Util.addEvent(window, 'touchend', this._eventHandlers.mouseup);
-                Util.addEvent(c, 'touchend', this._eventHandlers.mouseup);
-                Util.addEvent(c, 'touchmove', this._eventHandlers.mousemove);
-            } else {
+            // Touch events are disabled because the implementation is not working.
+            // User with touch device can't interact with the page.
+            //
+            // if ('ontouchstart' in document.documentElement) {
+            //     Util.addEvent(c, 'touchstart', this._eventHandlers.mousedown);
+            //     Util.addEvent(window, 'touchend', this._eventHandlers.mouseup);
+            //     Util.addEvent(c, 'touchend', this._eventHandlers.mouseup);
+            //     Util.addEvent(c, 'touchmove', this._eventHandlers.mousemove);
+            // } else {
                 Util.addEvent(c, 'mousedown', this._eventHandlers.mousedown);
                 Util.addEvent(window, 'mouseup', this._eventHandlers.mouseup);
                 Util.addEvent(c, 'mouseup', this._eventHandlers.mouseup);
                 Util.addEvent(c, 'mousemove', this._eventHandlers.mousemove);
                 Util.addEvent(c, (Util.Engine.gecko) ? 'DOMMouseScroll' : 'mousewheel',
                               this._eventHandlers.mousewheel);
-            }
+            // }
 
             /* Work around right and middle click browser behaviors */
             Util.addEvent(document, 'click', this._eventHandlers.mousedisable);
@@ -378,19 +381,22 @@ var Keyboard, Mouse;
         ungrab: function () {
             var c = this._target;
 
-            if ('ontouchstart' in document.documentElement) {
-                Util.removeEvent(c, 'touchstart', this._eventHandlers.mousedown);
-                Util.removeEvent(window, 'touchend', this._eventHandlers.mouseup);
-                Util.removeEvent(c, 'touchend', this._eventHandlers.mouseup);
-                Util.removeEvent(c, 'touchmove', this._eventHandlers.mousemove);
-            } else {
+            // Touch events are disabled because the implementation is not working.
+            // User with touch device can't interact with the page.
+            //
+            // if ('ontouchstart' in document.documentElement) {
+            //     Util.removeEvent(c, 'touchstart', this._eventHandlers.mousedown);
+            //     Util.removeEvent(window, 'touchend', this._eventHandlers.mouseup);
+            //     Util.removeEvent(c, 'touchend', this._eventHandlers.mouseup);
+            //     Util.removeEvent(c, 'touchmove', this._eventHandlers.mousemove);
+            // } else {
                 Util.removeEvent(c, 'mousedown', this._eventHandlers.mousedown);
                 Util.removeEvent(window, 'mouseup', this._eventHandlers.mouseup);
                 Util.removeEvent(c, 'mouseup', this._eventHandlers.mouseup);
                 Util.removeEvent(c, 'mousemove', this._eventHandlers.mousemove);
                 Util.removeEvent(c, (Util.Engine.gecko) ? 'DOMMouseScroll' : 'mousewheel',
                                  this._eventHandlers.mousewheel);
-            }
+            // }
 
             /* Work around right and middle click browser behaviors */
             Util.removeEvent(document, 'click', this._eventHandlers.mousedisable);
