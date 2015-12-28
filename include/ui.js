@@ -130,20 +130,18 @@
         var portsToTry = [this.options.autoConnect.port].concat(this.options.fallbackPorts);
 
         function conditionalRetry() {
-            if (self.reconnectOnDisconnect) {
-              if (self.timesRetried < self.options.retries) {
-                  self.timesRetried++;
-                  self.disconnect();
-                  // shuffle port array around
-                  portsToTry = portsToTry.slice(1).concat([portsToTry[0]]);
-                  Util.Warn("Could not connect, retrying on port", portsToTry);
-                  self.options.autoConnect.port = portsToTry[0];
-                  self.options.fallbackPorts = portsToTry.slice(1);
-                  self.load(self.options);
-              } else if (!self.hasAlerted) {
-                  self.hasAlerted = true;
-                  self.options.onFailedState();
-              }
+            if (self.timesRetried < self.options.retries) {
+                self.timesRetried++;
+                self.disconnect();
+                // shuffle port array around
+                portsToTry = portsToTry.slice(1).concat([portsToTry[0]]);
+                Util.Warn("Could not connect, retrying on port", portsToTry);
+                self.options.autoConnect.port = portsToTry[0];
+                self.options.fallbackPorts = portsToTry.slice(1);
+                self.load(self.options);
+            } else if (!self.hasAlerted) {
+                self.hasAlerted = true;
+                self.options.onFailedState();
             }
         }
 
