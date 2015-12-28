@@ -157,6 +157,10 @@ var Keyboard, Mouse;
             var args = Array.prototype.slice.call(arguments);
             var self = scope || this;
 
+            if (!self._focused) {
+                return true;
+            }
+
             if (timeoutId === -1) {
                 timeoutId = setTimeout(function () {
                     timeoutId = -1;
@@ -192,7 +196,7 @@ var Keyboard, Mouse;
             'mousedown': this._handleMouseDown.bind(this),
             'mouseup': this._handleMouseUp.bind(this),
             'mousemove': this._handleMouseMove.bind(this),
-            'mousewheel': batchEventHandlerCalls(this._handleMouseWheel.bind(this), 200),
+            'mousewheel': batchEventHandlerCalls(this._handleMouseWheel.bind(this), 200, this),
             'mousedisable': this._handleMouseDisable.bind(this)
         };
     };
@@ -369,8 +373,7 @@ var Keyboard, Mouse;
                 Util.addEvent(window, 'mouseup', this._eventHandlers.mouseup);
                 Util.addEvent(c, 'mouseup', this._eventHandlers.mouseup);
                 Util.addEvent(c, 'mousemove', this._eventHandlers.mousemove);
-                Util.addEvent(c, (Util.Engine.gecko) ? 'DOMMouseScroll' : 'mousewheel',
-                              this._eventHandlers.mousewheel);
+                Util.addEvent(c, Util.getWheelEventName(), this._eventHandlers.mousewheel);
             // }
 
             /* Work around right and middle click browser behaviors */
@@ -394,8 +397,7 @@ var Keyboard, Mouse;
                 Util.removeEvent(window, 'mouseup', this._eventHandlers.mouseup);
                 Util.removeEvent(c, 'mouseup', this._eventHandlers.mouseup);
                 Util.removeEvent(c, 'mousemove', this._eventHandlers.mousemove);
-                Util.removeEvent(c, (Util.Engine.gecko) ? 'DOMMouseScroll' : 'mousewheel',
-                                 this._eventHandlers.mousewheel);
+                Util.removeEvent(c, Util.getWheelEventName(), this._eventHandlers.mousewheel);
             // }
 
             /* Work around right and middle click browser behaviors */

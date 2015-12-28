@@ -549,6 +549,12 @@ Util.browserSupportsCursorURIs = function () {
 // Set browser engine versions. Based on mootools.
 Util.Features = {xpath: !!(document.evaluate), air: !!(window.runtime), query: !!(document.querySelector)};
 
+Util.getWheelEventName = function () {
+    return "onwheel" in document.createElement("div") ? "wheel" :
+        document.onmousewheel !== undefined ? "mousewheel" :
+        "DOMMouseScroll";
+};
+
 (function () {
     "use strict";
     // 'presto': (function () { return (!window.opera) ? false : true; }()),
