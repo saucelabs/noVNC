@@ -150,30 +150,32 @@ var Keyboard, Mouse;
     // Mouse event handler
     //
 
-    function batchEventHandlerCalls(fn, timeout, scope) {
-        var callArgs = [], timeoutId = -1;
+    function throttleEventHandlerCall(fn, treshhold, scope) {
+        var last = -1, timeoutId = -1;
 
-        return function batchEventHandlerCallsInnner(e) {
-            var args = Array.prototype.slice.call(arguments);
+        return function throttleEventHandlerCallInnner(e) {
             var self = scope || this;
 
             if (!self._focused) {
                 return true;
             }
 
-            if (timeoutId === -1) {
+            Util.stopEvent(e);
+
+            var args = Array.prototype.slice.call(arguments);
+            var now = Date.now();
+
+            if (last !== -1 && now < last + treshhold) {
+                clearTimeout(timeoutId);
                 timeoutId = setTimeout(function () {
-                    timeoutId = -1;
-                    callArgs.forEach(function (args) {
-                        fn.apply(self, args);
-                    });
-                    callArgs.length = 0;
-                }, timeout);
+                    last = now;
+                    fn.apply(self, args);
+                }, treshhold);
+            } else {
+                last = now;
+                fn.apply(self, args);
             }
 
-            callArgs.push(args);
-
-            Util.stopEvent(e);
             return false;
         };
     }
@@ -196,7 +198,7 @@ var Keyboard, Mouse;
             'mousedown': this._handleMouseDown.bind(this),
             'mouseup': this._handleMouseUp.bind(this),
             'mousemove': this._handleMouseMove.bind(this),
-            'mousewheel': batchEventHandlerCalls(this._handleMouseWheel.bind(this), 200, this),
+            'mousewheel': throttleEventHandlerCall(this._handleMouseWheel.bind(this), 1000 / 30, this),
             'mousedisable': this._handleMouseDisable.bind(this)
         };
     };
@@ -306,14 +308,15 @@ var Keyboard, Mouse;
             var evt = (e ? e : window.event);
             var pos = Util.getEventPosition(e, this._target, this._scale);
             var wheelData = evt.detail ? evt.detail * -1 : evt.wheelDelta / 40;
+
             var bmask;
             if (wheelData > 0) {
                 bmask = 1 << 3;
-            } else {
+            } else if (wheelData < 0) {
                 bmask = 1 << 4;
             }
 
-            if (this._onMouseButton) {
+            if (bmask && this._onMouseButton) {
                 this._onMouseButton(pos.x, pos.y, 1, bmask);
                 this._onMouseButton(pos.x, pos.y, 0, bmask);
             }
