@@ -1407,6 +1407,27 @@ describe('Remote Frame Buffer Protocol Client', function () {
                 client._sock._websocket._receive_data(new Uint8Array([0, 0, 0, 0]));
                 expect(client._sock).to.have.sent(new Uint8Array([0]));
             });
+
+            it('should fail if webSocketOpen event handler prevents execution', function () {
+                const client = make_rfb();
+                client.addEventListener('webSocketOpen', (event) => {
+                    event.defaultPrevented = true;
+                });
+                sinon.spy(client, "_fail");
+                client._sock._websocket._open();
+                expect(client._fail).to.have.been.calledOnce;
+            });
+
+            it('should pass if webSocketOpen event handler passes', function () {
+                const client = make_rfb();
+                client.addEventListener('webSocketOpen', (event) => {
+                    expect(!!event.ws).to.be.true;
+                });
+                client._rfb_connection_state = 'connecting';
+                client._rfb_init_state = 'SecurityResult';
+                client._sock._websocket._receive_data(new Uint8Array([0, 0, 0, 0]));
+                expect(client._rfb_init_state).to.equal('ServerInitialisation');
+            });
         });
 
         describe('ServerInitialisation', function () {
