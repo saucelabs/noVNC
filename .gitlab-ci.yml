@@ -1,0 +1,29 @@
+image: node:10-alpine
+
+before_script:  
+  - npm i
+
+cache:
+  paths:
+    - node_modules/
+
+stages:
+  - test 
+  - deploy
+
+lint:
+  stage: test
+  tags: [k8s, multi-runner, build, sjc1]
+  script:
+    - npm run lint
+
+publish:  
+  stage: deploy
+  only:
+    - master
+  only:
+    - tags
+    - triggers
+  script:
+    - echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}'>.npmrc
+    - npm publish
