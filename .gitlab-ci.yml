@@ -19,6 +19,7 @@ lint:
 
 publish:  
   stage: deploy
+  tags: [k8s, multi-runner, build, sjc1]
   only:
     - master
   only:
