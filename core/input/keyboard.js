@@ -25,6 +25,7 @@ export default class Keyboard {
 
         // keep these here so we can refer to them later
         this._eventHandlers = {
+            'paste': this._handlePaste.bind(this),
             'keyup': this._handleKeyUp.bind(this),
             'keydown': this._handleKeyDown.bind(this),
             'keypress': this._handleKeyPress.bind(this),
@@ -35,6 +36,9 @@ export default class Keyboard {
         // ===== EVENT HANDLERS =====
 
         this.onkeyevent = () => {}; // Handler for key press/release
+        this.onpasteevent = () => {}; // Handler for paste
+        this._sendLastSurpressedKey = () => {}; // Handler for paste
+
     }
 
     // ===== PRIVATE METHODS =====
@@ -88,9 +92,21 @@ export default class Keyboard {
         return 'Unidentified';
     }
 
+    _isCtrlOrCmdArmed(e) {
+        return browser.isMac() && e.metaKey || !browser.isMac() && e.ctrlKey;
+    }
+
     _handleKeyDown(e) {
         const code = this._getKeyCode(e);
         let keysym = KeyboardUtil.getKeysym(e);
+
+        if (this._isCtrlOrCmdArmed(e)) {
+            if (e.key !== 'v') {
+                this._sendKeyEvent(keysym, code, true);
+            }
+
+            return true;
+        }
 
         // Windows doesn't have a proper AltGr, but handles it using
         // fake Ctrl+Alt. However the remote end might not be Windows,
@@ -201,15 +217,27 @@ export default class Keyboard {
 
     // Legacy event for browsers without code/key
     _handleKeyPress(e) {
+        let code = this._getKeyCode(e);
+        const keysym = KeyboardUtil.getKeysym(e);
+
+        if (this._isCtrlOrCmdArmed(e)) {
+            if (e.key !== 'v') {
+                this._sendKeyEvent(keysym, code, true);
+            } else {
+                this._sendLastSurpressedKey = () => {
+                    this._sendKeyEvent(keysym, code, true);
+                };
+            }
+
+            return true;
+        }
+
         stopEvent(e);
 
         // Are we expecting a keypress?
         if (this._pendingKey === null) {
             return;
         }
-
-        let code = this._getKeyCode(e);
-        const keysym = KeyboardUtil.getKeysym(e);
 
         // The key we were waiting for?
         if ((code !== 'Unidentified') && (code != this._pendingKey)) {
@@ -260,6 +288,13 @@ export default class Keyboard {
         }
 
         this._sendKeyEvent(keysym, code, true);
+    }
+
+    _handlePaste(e) {
+        stopEvent(e);
+
+        this.onpasteevent(e.clipboardData.getData('Text'));
+        this._sendLastSurpressedKey();
     }
 
     _handleKeyUp(e) {
@@ -324,6 +359,9 @@ export default class Keyboard {
     grab() {
         //Log.Debug(">> Keyboard.grab");
 
+        this._target.focus();
+
+        this._target.addEventListener('paste', this._eventHandlers.paste);
         this._target.addEventListener('keydown', this._eventHandlers.keydown);
         this._target.addEventListener('keyup', this._eventHandlers.keyup);
         this._target.addEventListener('keypress', this._eventHandlers.keypress);
@@ -357,6 +395,7 @@ export default class Keyboard {
              'keydown', 'keyup'].forEach(type => document.removeEventListener(type, handler));
         }
 
+        this._target.removeEventListener('paste', this._eventHandlers.paste);
         this._target.removeEventListener('keydown', this._eventHandlers.keydown);
         this._target.removeEventListener('keyup', this._eventHandlers.keyup);
         this._target.removeEventListener('keypress', this._eventHandlers.keypress);

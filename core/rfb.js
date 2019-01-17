@@ -52,6 +52,7 @@ export default class RFB extends EventTargetMixin {
         this._shared = 'shared' in options ? !!options.shared : true;
         this._repeaterID = options.repeaterID || '';
         this._showDotCursor = options.showDotCursor || false;
+        this._customKeySymMappings = options.customKeySymMappings || {}; // used to fix keymappings in case source and target os are different or the vnc server doesn't map properly
 
         // Internal state
         this._rfb_connection_state = '';
@@ -140,6 +141,16 @@ export default class RFB extends EventTargetMixin {
         this._canvas.tabIndex = -1;
         this._screen.appendChild(this._canvas);
 
+        this._textarea = document.createElement('textarea');
+        this._textarea.style.display = 'block';
+        this._textarea.autocapitalize = 'off';
+        this._textarea.autocorrect = 'off';
+        this._textarea.autocomplete = 'off';
+        this._textarea.spellcheck = 'false';
+        this._textarea.mozactionhint = 'Enter';
+        this._textarea.tabindex = '-1';
+        this._screen.appendChild(this._textarea);
+
         // Cursor
         this._cursor = new Cursor();
 
@@ -173,8 +184,9 @@ export default class RFB extends EventTargetMixin {
         this._display.onflush = this._onFlush.bind(this);
         this._display.clear();
 
-        this._keyboard = new Keyboard(this._canvas);
+        this._keyboard = new Keyboard(this._textarea);
         this._keyboard.onkeyevent = this._handleKeyEvent.bind(this);
+        this._keyboard.onpasteevent = this.clipboardPasteFrom.bind(this);
 
         this._mouse = new Mouse(this._canvas);
         this._mouse.onmousebutton = this._handleMouseButton.bind(this);
@@ -373,7 +385,7 @@ export default class RFB extends EventTargetMixin {
     }
 
     focus() {
-        this._canvas.focus();
+        this._textarea.focus();
     }
 
     blur() {
@@ -713,7 +725,7 @@ export default class RFB extends EventTargetMixin {
     }
 
     _handleKeyEvent(keysym, code, down) {
-        this.sendKey(keysym, code, down);
+        this.sendKey(this._customKeySymMappings[keysym] || keysym, code, down);
     }
 
     _handleMouseButton(x, y, down, bmask) {
