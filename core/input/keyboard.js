@@ -103,6 +103,10 @@ export default class Keyboard {
         if (this._isCtrlOrCmdArmed(e)) {
             if (e.key !== 'v') {
                 this._sendKeyEvent(keysym, code, true);
+            } else {
+                this._sendLastSurpressedKey = () => {
+                    this._sendKeyEvent(keysym, code, true);
+                };
             }
 
             return true;
