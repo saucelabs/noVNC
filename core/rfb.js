@@ -154,7 +154,8 @@ export default class RFB extends EventTargetMixin {
         this._textarea.autocomplete = 'off';
         this._textarea.spellcheck = 'false';
         this._textarea.mozactionhint = 'Enter';
-        this._textarea.tabindex = '-1';        this._textarea.autocapitalize = 'off';
+        this._textarea.tabindex = '-1';
+        this._textarea.autocapitalize = 'off';
         this._textarea.autocorrect = 'off';
         this._textarea.autocomplete = 'off';
         this._textarea.spellcheck = 'false';
@@ -1334,6 +1335,10 @@ export default class RFB extends EventTargetMixin {
         const text = this._sock.rQshiftStr(length);
 
         if (this._viewOnly) { return true; }
+
+        this._textarea.value = text;
+        this._textarea.focus();
+        this._textarea.select();
 
         this.dispatchEvent(new CustomEvent(
             "clipboard",
