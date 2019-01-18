@@ -142,8 +142,19 @@ export default class RFB extends EventTargetMixin {
         this._screen.appendChild(this._canvas);
 
         this._textarea = document.createElement('textarea');
-        this._textarea.style.display = 'none';
+        this._textarea.style.position = 'absolute';
+        this._textarea.style.top = '50%';
+        this._textarea.style.left = '50%';
+        this._textarea.style.zIndex = '-10';
+        this._textarea.style.opacity = '.001';
+        this._textarea.style.width = '1px';
+        this._textarea.style.height = '1px';
         this._textarea.autocapitalize = 'off';
+        this._textarea.autocorrect = 'off';
+        this._textarea.autocomplete = 'off';
+        this._textarea.spellcheck = 'false';
+        this._textarea.mozactionhint = 'Enter';
+        this._textarea.tabindex = '-1';        this._textarea.autocapitalize = 'off';
         this._textarea.autocorrect = 'off';
         this._textarea.autocomplete = 'off';
         this._textarea.spellcheck = 'false';
