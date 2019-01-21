@@ -140,6 +140,12 @@ export default class RFB extends EventTargetMixin {
         this._canvas.tabIndex = -1;
         this._screen.appendChild(this._canvas);
 
+        // Performance
+        this._performanceInfo = {
+            fps: 0,
+            timestamp: -1,
+        };
+
         // Cursor
         this._cursor = new Cursor();
 
@@ -170,6 +176,7 @@ export default class RFB extends EventTargetMixin {
             Log.Error("Display exception: " + exc);
             throw exc;
         }
+        this._display.onframechange = this._handleFrameChange.bind(this);
         this._display.onflush = this._onFlush.bind(this);
         this._display.clear();
 
@@ -1487,6 +1494,24 @@ export default class RFB extends EventTargetMixin {
         this._display.flip();
 
         return true;  // We finished this FBU
+    }
+
+    _handleFrameChange() {
+        const currentTimestamp = performance.now();
+        const { timestamp } = this._performanceInfo;
+        if (timestamp < 0) {
+            this._performanceInfo.timestamp = currentTimestamp;
+        } else {
+            const currentSecond = Math.floor(currentTimestamp / 1000);
+            const previousSecond = Math.floor(timestamp / 1000);
+            if (currentSecond === previousSecond) {
+                ++this._performanceInfo.fps;
+            } else {
+                this.dispatchEvent(new CustomEvent(
+                    "performance", { fps: this._performanceInfo.fps } ));
+                this._performanceInfo.fps = 0;
+            }
+        }
     }
 
     _handleRect() {

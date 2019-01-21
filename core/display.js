@@ -86,6 +86,7 @@ export default class Display {
         // ===== EVENT HANDLERS =====
 
         this.onflush = () => {}; // A flush request has finished
+        this.onframechange = () => {}; // Handler for frame change
     }
 
     // ===== PROPERTIES =====
@@ -300,6 +301,8 @@ export default class Display {
 
             this._damageBounds.left = this._damageBounds.top = 65535;
             this._damageBounds.right = this._damageBounds.bottom = 0;
+
+            this.onframechange();
         }
     }
 
