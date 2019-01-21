@@ -1,6 +1,7 @@
 image: node:10-alpine
 
 before_script:  
+  - echo "unsafe-perm = true" >> ~/.npmrc
   - npm i
 
 cache:
