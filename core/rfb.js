@@ -163,6 +163,9 @@ export default class RFB extends EventTargetMixin {
         this._textarea.tabindex = '-1';
         this._screen.appendChild(this._textarea);
 
+        // Performance
+        this._resetPerformanceInfo();
+
         // Cursor
         this._cursor = new Cursor();
 
@@ -333,6 +336,8 @@ export default class RFB extends EventTargetMixin {
     get background() { return this._screen.style.background; }
     set background(cssValue) { this._screen.style.background = cssValue; }
 
+    get fps() { return this._performanceInfo.fps; }
+
     // ===== PUBLIC METHODS =====
 
     disconnect() {
@@ -469,6 +474,15 @@ export default class RFB extends EventTargetMixin {
         }
         clearTimeout(this._resizeTimeout);
         Log.Debug("<< RFB.disconnect");
+    }
+
+    _resetPerformanceInfo() {
+        this._performanceInfo = {
+            fpsArray: [],
+            fpsIndex: 0,
+            fps: 0,
+            lastTimestamp: 0,
+        };
     }
 
     _focusCanvas(event) {
@@ -657,6 +671,7 @@ export default class RFB extends EventTargetMixin {
 
             case 'connected':
                 this.dispatchEvent(new CustomEvent("connect", { detail: {} }));
+                this._resetPerformanceInfo();
                 break;
 
             case 'disconnecting':
@@ -1525,21 +1540,31 @@ export default class RFB extends EventTargetMixin {
     }
 
     _handleFrameChange() {
-        const currentTimestamp = performance.now();
-        const { timestamp } = this._performanceInfo;
-        if (timestamp < 0) {
-            this._performanceInfo.timestamp = currentTimestamp;
-        } else {
-            const currentSecond = Math.floor(currentTimestamp / 1000);
-            const previousSecond = Math.floor(timestamp / 1000);
-            if (currentSecond === previousSecond) {
-                ++this._performanceInfo.fps;
-            } else {
-                this.dispatchEvent(new CustomEvent(
-                    "performance", { fps: this._performanceInfo.fps } ));
-                this._performanceInfo.fps = 0;
-            }
+        const timestamp = performance.now() / 1000.0;
+        if (this._performanceInfo.lastTimestamp < 0) {
+            this._performanceInfo.lastTimestamp = timestamp;
+            return;
         }
+
+        const { fpsArray } = this._performanceInfo;
+        const elapsed = timestamp - this._performanceInfo.lastTimestamp;
+        if (fpsArray.length < 25) {
+            fpsArray.push(elapsed);
+        } else {
+            fpsArray[this._performanceInfo.fpsIndex] = elapsed;
+            this._performanceInfo.fpsIndex = (this._performanceInfo.fpsIndex + 1) % fpsArray.length;
+        }
+        let min = fpsArray[0];
+        let max = fpsArray[0];
+        let avg = 0.0;
+        for (const item of fpsArray) {
+            if (min > item) min = item;
+            if (max < item) max = item;
+            avg += item;
+        }
+        avg /= fpsArray.length;
+        this._performanceInfo.fps = Math.floor(1 / avg);
+        this._performanceInfo.lastTimestamp = timestamp;
     }
 
     _handleRect() {

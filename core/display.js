@@ -52,6 +52,8 @@ export default class Display {
             throw new Error("no getContext method");
         }
 
+        this.onframechange = () => {}; // Handler for frame change
+
         this._targetCtx = this._target.getContext('2d');
 
         // the visible canvas viewport (i.e. what actually gets seen)
@@ -86,7 +88,6 @@ export default class Display {
         // ===== EVENT HANDLERS =====
 
         this.onflush = () => {}; // A flush request has finished
-        this.onframechange = () => {}; // Handler for frame change
     }
 
     // ===== PROPERTIES =====
