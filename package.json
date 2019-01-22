@@ -2,8 +2,7 @@
   "name": "@saucelabs/novnc",
   "version": "1.0.10",
   "description": "An HTML5 VNC client",
-  "browser": "lib/rfb",
-  "main": "lib/index",
+  "browser": "lib/index",
   "directories": {
     "lib": "lib",
     "doc": "docs",
