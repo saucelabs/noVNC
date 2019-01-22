@@ -1,6 +1,6 @@
 {
   "name": "@saucelabs/novnc",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "An HTML5 VNC client",
   "browser": "lib/rfb",
   "main": "lib/index",
