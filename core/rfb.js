@@ -675,6 +675,7 @@ export default class RFB extends EventTargetMixin {
                 break;
 
             case 'disconnecting':
+                this._resetPerformanceInfo();
                 this._disconnect();
 
                 this._disconnTimer = setTimeout(() => {
