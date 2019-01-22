@@ -19,6 +19,7 @@ import Websock from "./websock.js";
 import DES from "./des.js";
 import KeyTable from "./input/keysym.js";
 import XtScancode from "./input/xtscancodes.js";
+import { RingBuffer } from "./util/perf.js";
 import { encodings } from "./encodings.js";
 import "./util/polyfill.js";
 
@@ -31,6 +32,7 @@ import TightPNGDecoder from "./decoders/tightpng.js";
 
 // How many seconds to wait for a disconnect to finish
 const DISCONNECT_TIMEOUT = 3;
+const DEFAULT_BACKGROUND = 'rgb(40, 40, 40)';
 
 export default class RFB extends EventTargetMixin {
     constructor(target, url, options) {
@@ -129,7 +131,7 @@ export default class RFB extends EventTargetMixin {
         this._screen.style.width = '100%';
         this._screen.style.height = '100%';
         this._screen.style.overflow = 'auto';
-        this._screen.style.backgroundColor = 'rgb(40, 40, 40)';
+        this._screen.style.background = DEFAULT_BACKGROUND;
         this._canvas = document.createElement('canvas');
         this._canvas.style.margin = 'auto';
         // Some browsers add an outline on focus
@@ -140,7 +142,6 @@ export default class RFB extends EventTargetMixin {
         this._canvas.height = 0;
         this._canvas.tabIndex = -1;
         this._screen.appendChild(this._canvas);
-
         this._textarea = document.createElement('textarea');
         this._textarea.style.position = 'absolute';
         this._textarea.style.top = '50%';
@@ -162,6 +163,9 @@ export default class RFB extends EventTargetMixin {
         this._textarea.mozactionhint = 'Enter';
         this._textarea.tabindex = '-1';
         this._screen.appendChild(this._textarea);
+
+        // Performance
+        this._resetPerformanceInfo();
 
         // Cursor
         this._cursor = new Cursor();
@@ -193,6 +197,7 @@ export default class RFB extends EventTargetMixin {
             Log.Error("Display exception: " + exc);
             throw exc;
         }
+        this._display.onframechange = this._handleFrameChange.bind(this);
         this._display.onflush = this._onFlush.bind(this);
         this._display.clear();
 
@@ -328,6 +333,11 @@ export default class RFB extends EventTargetMixin {
         this._showDotCursor = show;
         this._refreshCursor();
     }
+
+    get background() { return this._screen.style.background; }
+    set background(cssValue) { this._screen.style.background = cssValue; }
+
+    get fps() { return this._performanceInfo.fps; }
 
     // ===== PUBLIC METHODS =====
 
@@ -465,6 +475,14 @@ export default class RFB extends EventTargetMixin {
         }
         clearTimeout(this._resizeTimeout);
         Log.Debug("<< RFB.disconnect");
+    }
+
+    _resetPerformanceInfo() {
+        this._performanceInfo = {
+            fpsEstimates: new RingBuffer(25),
+            fps: 0,
+            lastTimestamp: -1,
+        };
     }
 
     _focusCanvas(event) {
@@ -653,9 +671,11 @@ export default class RFB extends EventTargetMixin {
 
             case 'connected':
                 this.dispatchEvent(new CustomEvent("connect", { detail: {} }));
+                this._resetPerformanceInfo();
                 break;
 
             case 'disconnecting':
+                this._resetPerformanceInfo();
                 this._disconnect();
 
                 this._disconnTimer = setTimeout(() => {
@@ -1518,6 +1538,20 @@ export default class RFB extends EventTargetMixin {
         this._display.flip();
 
         return true;  // We finished this FBU
+    }
+
+    _handleFrameChange() {
+        const timestampSeconds = performance.now() / 1000.0;
+        if (this._performanceInfo.lastTimestamp < 0) {
+            this._performanceInfo.lastTimestamp = timestampSeconds;
+            return;
+        }
+
+        const { fpsEstimates } = this._performanceInfo;
+        const secondsElapsed = timestampSeconds - this._performanceInfo.lastTimestamp;
+        fpsEstimates.push(secondsElapsed);
+        this._performanceInfo.fps = Math.floor(1 / fpsEstimates.avg);
+        this._performanceInfo.lastTimestamp = timestampSeconds;
     }
 
     _handleRect() {
