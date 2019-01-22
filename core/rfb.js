@@ -19,6 +19,7 @@ import Websock from "./websock.js";
 import DES from "./des.js";
 import KeyTable from "./input/keysym.js";
 import XtScancode from "./input/xtscancodes.js";
+import { RingBuffer } from "./util/perf.js";
 import { encodings } from "./encodings.js";
 import "./util/polyfill.js";
 
@@ -478,8 +479,7 @@ export default class RFB extends EventTargetMixin {
 
     _resetPerformanceInfo() {
         this._performanceInfo = {
-            fpsArray: [],
-            fpsIndex: 0,
+            fpsEstimates: new RingBuffer(25),
             fps: 0,
             lastTimestamp: -1,
         };
@@ -1540,31 +1540,17 @@ export default class RFB extends EventTargetMixin {
     }
 
     _handleFrameChange() {
-        const timestamp = performance.now() / 1000.0;
+        const timestampSeconds = performance.now() / 1000.0;
         if (this._performanceInfo.lastTimestamp < 0) {
-            this._performanceInfo.lastTimestamp = timestamp;
+            this._performanceInfo.lastTimestamp = timestampSeconds;
             return;
         }
 
-        const { fpsArray } = this._performanceInfo;
-        const elapsed = timestamp - this._performanceInfo.lastTimestamp;
-        if (fpsArray.length < 25) {
-            fpsArray.push(elapsed);
-        } else {
-            fpsArray[this._performanceInfo.fpsIndex] = elapsed;
-            this._performanceInfo.fpsIndex = (this._performanceInfo.fpsIndex + 1) % fpsArray.length;
-        }
-        let min = fpsArray[0];
-        let max = fpsArray[0];
-        let avg = 0.0;
-        for (const item of fpsArray) {
-            if (min > item) min = item;
-            if (max < item) max = item;
-            avg += item;
-        }
-        avg /= fpsArray.length;
-        this._performanceInfo.fps = Math.floor(1 / avg);
-        this._performanceInfo.lastTimestamp = timestamp;
+        const { fpsEstimates } = this._performanceInfo;
+        const secondsElapsed = timestampSeconds - this._performanceInfo.lastTimestamp;
+        fpsEstimates.push(secondsElapsed);
+        this._performanceInfo.fps = Math.floor(1 / fpsEstimates.avg);
+        this._performanceInfo.lastTimestamp = timestampSeconds;
     }
 
     _handleRect() {
