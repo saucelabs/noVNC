@@ -481,7 +481,7 @@ export default class RFB extends EventTargetMixin {
             fpsArray: [],
             fpsIndex: 0,
             fps: 0,
-            lastTimestamp: 0,
+            lastTimestamp: -1,
         };
     }
 
