@@ -12,7 +12,11 @@ export class RingBuffer {
     }
 
     get avg() {
-        const sum = this._buf.reduce((a, b) => a + b, 0);
+        if (!this._buf.length) {
+            return 0.0;
+        }
+
+        const sum = this._buf.reduce((a, b) => a + b, 0.0);
         return sum * 1.0 / this._buf.length;
     }
 
