@@ -297,7 +297,19 @@ export default class Keyboard {
     _handlePaste(e) {
         stopEvent(e);
 
-        this.onpasteevent(e.clipboardData.getData('Text'));
+        let pastedText = null;
+        if (window.clipboardData && window.clipboardData.getData) {
+            // IE
+            pastedText = window.clipboardData.getData('Text');
+        } else if (e.clipboardData && e.clipboardData.getData) {
+            // Other browsers
+            pastedText = e.clipboardData.getData('text/plain');
+        }
+        if (typeof pastedText === 'string' || pastedText instanceof String) {
+            this.onpasteevent(pastedText);
+        } else {
+            Log.Error('Could not retrieve the text content of the clipboard');
+        }
         this._sendLastSurpressedKey();
     }
 
