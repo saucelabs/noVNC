@@ -204,6 +204,7 @@ export default class RFB extends EventTargetMixin {
         this._keyboard = new Keyboard(this._textarea);
         this._keyboard.onkeyevent = this._handleKeyEvent.bind(this);
         this._keyboard.onpasteevent = this.clipboardPasteFrom.bind(this);
+        this._keyboard.oncopyevent = this._handleCopyEvent.bind(this);
 
         this._mouse = new Mouse(this._canvas);
         this._mouse.onmousebutton = this._handleMouseButton.bind(this);
@@ -414,12 +415,25 @@ export default class RFB extends EventTargetMixin {
         this._canvas.blur();
     }
 
-    clipboardPasteFrom(text) {
+    clipboardPasteFrom(e) {
         if (this._rfb_connection_state !== 'connected' || this._viewOnly) { return; }
+        const {text, isIE} = e;
+        if (isIE) {
+            // An ugly hack for IE to propagate the V key to the remote machine properly
+            this.sendKey('v'.charCodeAt(), XtScancode.KeyV);
+        }
         RFB.messages.clientCutText(this._sock, text);
     }
 
     // ===== PRIVATE METHODS =====
+
+    _handleCopyEvent(e) {
+        const {isIE} = e;
+        if (isIE) {
+            // An ugly hack for IE to propagate the C key to the remote machine properly
+            this.sendKey('c'.charCodeAt(), XtScancode.KeyC);
+        }
+    }
 
     _connect() {
         Log.Debug(">> RFB.connect");
