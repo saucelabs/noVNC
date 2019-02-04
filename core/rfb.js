@@ -203,7 +203,7 @@ export default class RFB extends EventTargetMixin {
 
         this._keyboard = new Keyboard(this._textarea);
         this._keyboard.onkeyevent = this._handleKeyEvent.bind(this);
-        this._keyboard.onpasteevent = this.clipboardPasteFrom.bind(this);
+        this._keyboard.onpasteevent = this._handlePasteEvent.bind(this);
 
         this._mouse = new Mouse(this._canvas);
         this._mouse.onmousebutton = this._handleMouseButton.bind(this);
@@ -420,6 +420,11 @@ export default class RFB extends EventTargetMixin {
     }
 
     // ===== PRIVATE METHODS =====
+
+    _handlePasteEvent(e) {
+        if (this._rfb_connection_state !== 'connected' || this._viewOnly) { return; }
+        this.clipboardPasteFrom(e.text);
+    }
 
     _connect() {
         Log.Debug(">> RFB.connect");
