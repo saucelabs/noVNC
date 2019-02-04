@@ -1306,9 +1306,9 @@ export default class RFB extends EventTargetMixin {
         encs.push(encodings.pseudoEncodingFence);
         encs.push(encodings.pseudoEncodingContinuousUpdates);
 
-        if (this._fb_depth == 24) {
-            encs.push(encodings.pseudoEncodingCursor);
-        }
+        // if (this._fb_depth == 24) {
+        //     encs.push(encodings.pseudoEncodingCursor);
+        // }
 
         RFB.messages.clientEncodings(this._sock, encs);
     }
