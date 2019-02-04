@@ -26,6 +26,7 @@ export default class Keyboard {
         // keep these here so we can refer to them later
         this._eventHandlers = {
             'paste': this._handlePaste.bind(this),
+            'copy': this._handleCopy.bind(this),
             'keyup': this._handleKeyUp.bind(this),
             'keydown': this._handleKeyDown.bind(this),
             'keypress': this._handleKeyPress.bind(this),
@@ -294,19 +295,40 @@ export default class Keyboard {
         this._sendKeyEvent(keysym, code, true);
     }
 
+    _handleCopy(e) {
+        if (window.clipboardData && !e.clipboardData) {
+            // An ugly hack for IE to propagate the C key to the remote machine properly
+            const keySym = 'c'.charCodeAt();
+            const code = KeyTable.KeyC;
+            this._sendKeyEvent(keySym, code, true);
+            this._sendKeyEvent(keySym, code, false);
+        }
+    }
+
     _handlePaste(e) {
         stopEvent(e);
 
         let pastedText = null;
-        if (window.clipboardData && window.clipboardData.getData) {
-            // IE
-            pastedText = window.clipboardData.getData('Text');
-        } else if (e.clipboardData && e.clipboardData.getData) {
+        let isIE = false;
+        if (e.clipboardData && e.clipboardData.getData) {
             // Other browsers
             pastedText = e.clipboardData.getData('text/plain');
+        } else if (window.clipboardData && window.clipboardData.getData) {
+            // IE
+            pastedText = window.clipboardData.getData('Text');
+            isIE = true;
         }
         if (typeof pastedText === 'string' || pastedText instanceof String) {
-            this.onpasteevent(pastedText);
+            if (isIE) {
+                // An ugly hack for IE to propagate the V key to the remote machine properly
+                const keySym = 'v'.charCodeAt();
+                const code = KeyTable.KeyV;
+                this._sendKeyEvent(keySym, code, true);
+                this._sendKeyEvent(keySym, code, false);
+            }
+            this.onpasteevent({
+                text: pastedText,
+            });
         } else {
             Log.Error('Could not retrieve the text content of the clipboard');
         }
@@ -378,6 +400,7 @@ export default class Keyboard {
         this._target.focus();
 
         this._target.addEventListener('paste', this._eventHandlers.paste);
+        this._target.addEventListener('copy', this._eventHandlers.copy);
         this._target.addEventListener('keydown', this._eventHandlers.keydown);
         this._target.addEventListener('keyup', this._eventHandlers.keyup);
         this._target.addEventListener('keypress', this._eventHandlers.keypress);
@@ -412,6 +435,7 @@ export default class Keyboard {
         }
 
         this._target.removeEventListener('paste', this._eventHandlers.paste);
+        this._target.removeEventListener('copy', this._eventHandlers.copy);
         this._target.removeEventListener('keydown', this._eventHandlers.keydown);
         this._target.removeEventListener('keyup', this._eventHandlers.keyup);
         this._target.removeEventListener('keypress', this._eventHandlers.keypress);
