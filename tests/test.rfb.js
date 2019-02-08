@@ -268,10 +268,10 @@ describe('Remote Frame Buffer Protocol Client', function () {
         });
 
         describe('#focus', function () {
-            it('should move focus to canvas object', function () {
-                client._canvas.focus = sinon.spy();
+            it('should move focus to textarea object', function () {
+                client._textarea.focus = sinon.spy();
                 client.focus();
-                expect(client._canvas.focus).to.have.been.called.once;
+                expect(client._textarea.focus).to.have.been.called.once;
             });
         });
 
