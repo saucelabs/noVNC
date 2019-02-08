@@ -12,10 +12,18 @@
 
 let _log_level = 'warn';
 
-let Debug = () => {};
-let Info = () => {};
-let Warn = () => {};
-let Error = () => {};
+const logDebug = (...args) => window.console.debug(...args);
+const logInfo = (...args) => window.console.info(...args);
+const logWarn = (...args) => window.console.warn(...args);
+const logError = (...args) => window.console.error(...args);
+const noop = () => {};
+const dummyLogger = {
+    Debug: noop,
+    Info: noop,
+    Warn: noop,
+    Error: noop,
+};
+const logger = Object.assign({}, dummyLogger);
 
 export function init_logging(level) {
     if (typeof level === 'undefined') {
@@ -24,19 +32,19 @@ export function init_logging(level) {
         _log_level = level;
     }
 
-    Debug = Info = Warn = Error = () => {};
+    Object.assign(logger, dummyLogger);
 
     if (typeof window.console !== "undefined") {
         /* eslint-disable no-console, no-fallthrough */
         switch (level) {
             case 'debug':
-                Debug = console.debug.bind(window.console);
+                logger.Debug = logDebug;
             case 'info':
-                Info  = console.info.bind(window.console);
+                logger.Info  = logInfo;
             case 'warn':
-                Warn  = console.warn.bind(window.console);
+                logger.Warn  = logWarn;
             case 'error':
-                Error = console.error.bind(window.console);
+                logger.Error = logError;
             case 'none':
                 break;
             default:
@@ -50,7 +58,7 @@ export function get_logging() {
     return _log_level;
 }
 
-export { Debug, Info, Warn, Error };
+export default logger;
 
 // Initialize logging level
 init_logging();
