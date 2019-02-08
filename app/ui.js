@@ -6,7 +6,7 @@
  * See README.md for usage and integration instructions.
  */
 
-import * as Log from '../core/util/logging.js';
+import Log from '../core/util/logging.js';
 import _, { l10n } from './localization.js';
 import { isTouchDevice, isSafari, isIOS, isAndroid, dragThreshold }
     from '../core/util/browser.js';

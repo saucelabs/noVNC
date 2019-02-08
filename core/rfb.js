@@ -7,7 +7,7 @@
  *
  */
 
-import * as Log from './util/logging.js';
+import Log from './util/logging.js';
 import { decodeUTF8 } from './util/strings.js';
 import { dragThreshold } from './util/browser.js';
 import EventTargetMixin from './util/eventtarget.js';
