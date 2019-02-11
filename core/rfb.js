@@ -167,6 +167,9 @@ export default class RFB extends EventTargetMixin {
         // Performance
         this._resetPerformanceInfo();
 
+        // Clipboard
+        this._recentlyCutText = '';
+
         // Cursor
         this._cursor = new Cursor();
 
@@ -1377,8 +1380,12 @@ export default class RFB extends EventTargetMixin {
         this._textarea.select();
 
         this.dispatchEvent(new CustomEvent(
-            "clipboard",
-            { detail: { text: text } }));
+            "clipboard", {
+                detail: {
+                    wasSetViaRfb: this._recentlyCutText === text,
+                    text: text,
+                }
+            }));
 
         return true;
     }
@@ -1911,7 +1918,7 @@ RFB.messages = {
             let flushSize = Math.min(remaining, (sock._sQbufferSize - sock._sQlen));
             if (flushSize <= 0) {
                 this._fail("Clipboard contents could not be sent");
-                break;
+                return;
             }
 
             for (let i = 0; i < flushSize; i++) {
@@ -1924,6 +1931,7 @@ RFB.messages = {
             remaining -= flushSize;
             textOffset += flushSize;
         }
+        this._recentlyCutText = text;
     },
 
     setDesktopSize(sock, width, height, id, flags) {
