@@ -419,7 +419,11 @@ export default class RFB extends EventTargetMixin {
 
     clipboardPasteFrom(text) {
         if (this._rfb_connection_state !== 'connected' || this._viewOnly) { return; }
-        RFB.messages.clientCutText(this._sock, text);
+        if (RFB.messages.clientCutText(this._sock, text)) {
+            this._recentlyCutText = text;
+        } else {
+            Log.Warn("Clipboard contents could not be sent");
+        }
     }
 
     // ===== PRIVATE METHODS =====
@@ -1917,8 +1921,7 @@ RFB.messages = {
 
             let flushSize = Math.min(remaining, (sock._sQbufferSize - sock._sQlen));
             if (flushSize <= 0) {
-                this._fail("Clipboard contents could not be sent");
-                return;
+                return false;
             }
 
             for (let i = 0; i < flushSize; i++) {
@@ -1931,7 +1934,7 @@ RFB.messages = {
             remaining -= flushSize;
             textOffset += flushSize;
         }
-        this._recentlyCutText = text;
+        return true;
     },
 
     setDesktopSize(sock, width, height, id, flags) {
