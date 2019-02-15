@@ -296,7 +296,7 @@ export default class Keyboard {
     }
 
     _handleCopy(e) {
-        if (window.clipboardData && !e.clipboardData) {
+        if (browser.isIE() || browser.isEdge()) {
             // An ugly hack for IE to propagate the C key to the remote machine properly
             const keySym = 'c'.charCodeAt();
             const code = KeyTable.KeyC;
@@ -310,13 +310,17 @@ export default class Keyboard {
 
         let pastedText = null;
         let isIE = false;
-        if (e.clipboardData && e.clipboardData.getData) {
+        if (browser.isIE() || browser.isEdge()) {
+            // IE or Edge
+            if (window.clipboardData) {
+                pastedText = window.clipboardData.getData('Text');
+            } else if (e.clipboardData && e.clipboardData.getData) {
+                pastedText = e.clipboardData.getData('text/plain');
+            }
+            isIE = true;
+        } else if (e.clipboardData && e.clipboardData.getData) {
             // Other browsers
             pastedText = e.clipboardData.getData('text/plain');
-        } else if (window.clipboardData && window.clipboardData.getData) {
-            // IE
-            pastedText = window.clipboardData.getData('Text');
-            isIE = true;
         }
         if (typeof pastedText === 'string' || pastedText instanceof String) {
             if (isIE) {
