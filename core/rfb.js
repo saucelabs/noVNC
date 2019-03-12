@@ -276,7 +276,7 @@ export default class RFB extends EventTargetMixin {
 
         this._viewOnly = false;
         this._clipViewport = false;
-        this._scaleViewport = false;
+        this._scaleViewport = '';
         this._resizeSession = false;
     }
 
@@ -558,7 +558,7 @@ export default class RFB extends EventTargetMixin {
             this._display.scale = 1.0;
         } else {
             const size = this._screenSize();
-            this._display.autoscale(size.w, size.h);
+            this._display.autoscale(size.w, size.h, this._scaleViewport);
         }
         this._fixScrollbars();
     }

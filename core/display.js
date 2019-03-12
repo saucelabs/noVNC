@@ -17,6 +17,12 @@ try {
     // ignore failure
 }
 
+const FIT = {
+    BOTH: 'both',
+    HEIGHT: 'height',
+    WIDTH: 'width',
+};
+
 export default class Display {
     constructor(target) {
         this._drawCtx = null;
@@ -505,16 +511,30 @@ export default class Display {
         this._damage(x, y, img.width, img.height);
     }
 
-    autoscale(containerWidth, containerHeight) {
+    autoscale(containerWidth, containerHeight, fit = FIT.BOTH) {
         const vp = this._viewportLoc;
-        const targetAspectRatio = containerWidth / containerHeight;
-        const fbAspectRatio = vp.w / vp.h;
 
         let scaleRatio;
-        if (fbAspectRatio >= targetAspectRatio) {
-            scaleRatio = containerWidth / vp.w;
-        } else {
-            scaleRatio = containerHeight / vp.h;
+        switch (fit) {
+            case FIT.WIDTH:
+                scaleRatio = containerWidth / vp.w;
+                break;
+            case FIT.HEIGHT:
+                scaleRatio = containerHeight / vp.h;
+                break;
+            case FIT.BOTH:
+            default: {
+                if (containerHeight === 0 || containerWidth === 0) {
+                    Log.Warn(`The container's height (${containerHeight}) or width (${containerWidth}) is zero.`);
+                    return;
+                }
+                const targetAspectRatio = containerWidth / containerHeight;
+                const fbAspectRatio = vp.w / vp.h;
+                scaleRatio = (fbAspectRatio >= targetAspectRatio)
+                    ? containerWidth / vp.w
+                    : containerHeight / vp.h;
+                break;
+            }
         }
 
         this._rescale(scaleRatio);
