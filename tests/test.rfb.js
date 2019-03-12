@@ -405,7 +405,7 @@ describe('Remote Frame Buffer Protocol Client', function () {
         });
 
         it('should not update the viewport if scaling', function () {
-            client.scaleViewport = true;
+            client.scaleViewport = 'both';
             sinon.spy(client._display, "viewportChangeSize");
 
             container.style.width = '40px';
@@ -517,19 +517,19 @@ describe('Remote Frame Buffer Protocol Client', function () {
             client = make_rfb();
             container.style.width = '70px';
             container.style.height = '80px';
-            client.scaleViewport = true;
+            client.scaleViewport = 'both';
         });
 
         it('should update display scale factor when changing the property', function () {
             const spy = sinon.spy(client._display, "scale", ["set"]);
             sinon.spy(client._display, "autoscale");
 
-            client.scaleViewport = false;
+            client.scaleViewport = '';
             expect(spy.set).to.have.been.calledOnce;
             expect(spy.set).to.have.been.calledWith(1.0);
             expect(client._display.autoscale).to.not.have.been.called;
 
-            client.scaleViewport = true;
+            client.scaleViewport = 'both';
             expect(client._display.autoscale).to.have.been.calledOnce;
             expect(client._display.autoscale).to.have.been.calledWith(70, 80);
         });
@@ -539,13 +539,13 @@ describe('Remote Frame Buffer Protocol Client', function () {
 
             const spy = sinon.spy(client._display, "clipViewport", ["set"]);
 
-            client.scaleViewport = false;
+            client.scaleViewport = '';
             expect(spy.set).to.have.been.calledOnce;
             expect(spy.set).to.have.been.calledWith(true);
 
             spy.set.reset();
 
-            client.scaleViewport = true;
+            client.scaleViewport = 'both';
             expect(spy.set).to.have.been.calledOnce;
             expect(spy.set).to.have.been.calledWith(false);
         });
@@ -580,7 +580,7 @@ describe('Remote Frame Buffer Protocol Client', function () {
         });
 
         it('should not update the display scale factor if not scaling', function () {
-            client.scaleViewport = false;
+            client.scaleViewport = '';
 
             sinon.spy(client._display, "autoscale");
 

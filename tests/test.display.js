@@ -247,9 +247,28 @@ describe('Display/Canvas Helper', function () {
             display.autoscale(16, 9);
             expect(display.absX(9)).to.equal(3);
             expect(display.absY(18)).to.equal(6);
-            expect(canvas.clientWidth).to.equal(12);  // 16 * (4 / 3)
+            expect(canvas.clientWidth).to.equal(12);  // 16 * (3 / 4)
+            expect(canvas.clientHeight).to.equal(9);
+        });
+
+        it('fitMode "width" should use width to determine scale no matter the target aspect ratio', function () {
+            display.autoscale(12, 3, 'width');
+            expect(canvas.clientWidth).to.equal(12);
             expect(canvas.clientHeight).to.equal(9);
 
+            display.autoscale(24, 24, 'width');
+            expect(canvas.clientWidth).to.equal(24);
+            expect(canvas.clientHeight).to.equal(18);
+        });
+
+        it('fitMode "height" should use height to determine scale no matter the target aspect ratio', function () {
+            display.autoscale(4, 12, 'height');
+            expect(canvas.clientWidth).to.equal(16);
+            expect(canvas.clientHeight).to.equal(12);
+
+            display.autoscale(24, 24, 'height');
+            expect(canvas.clientWidth).to.equal(32);
+            expect(canvas.clientHeight).to.equal(24);
         });
 
         it('should not change the bitmap size of the canvas', function () {

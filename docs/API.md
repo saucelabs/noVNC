@@ -43,10 +43,14 @@ protocol stream.
     `clipViewport` is enabled. Disabled by default.
 
 `scaleViewport`
-  - Is a `boolean` indicating if the remote session should be scaled
-    locally so it fits its container. When disabled it will be centered
+  - Is a `string` indicating if the remote session should be scaled
+    locally so it fits its container. When disabled (empty string) it will be centered
     if the remote session is smaller than its container, or handled
     according to `clipViewport` if it is larger. Disabled by default.
+    The available options are:
+      - `width`: Resizing is based on the container's width.
+      - `height`: Resizing is based on the container's height.
+      - `both`: Resizing is based on the container's width **and** height.
 
 `resizeSession`
   - Is a `boolean` indicating if a request to resize the remote session
