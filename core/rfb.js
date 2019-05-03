@@ -1772,10 +1772,13 @@ export default class RFB extends EventTargetMixin {
     }
 
     _updateCursor(rgba, hotx, hoty, w, h) {
-        this._cursorImage = {
-            rgbaPixels: rgba,
-            hotx: hotx, hoty: hoty, w: w, h: h,
-        };
+        if (rgba.length) {
+            // TightVNC sometimes can send all-zeroes for internal sync
+            this._cursorImage = {
+                rgbaPixels: rgba,
+                hotx: hotx, hoty: hoty, w: w, h: h,
+            };
+        }
         this._refreshCursor();
     }
 
