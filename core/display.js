@@ -225,7 +225,11 @@ export default class Display {
             // We have to save the canvas data since changing the size will clear it
             let saveImg = null;
             if (canvas.width > 0 && canvas.height > 0) {
-                saveImg = this._drawCtx.getImageData(0, 0, canvas.width, canvas.height);
+                try {
+                    saveImg = this._drawCtx.getImageData(0, 0, canvas.width, canvas.height);
+                } catch (ign) {
+                    // ignore
+                }
             }
 
             if (canvas.width !== width) {
@@ -509,6 +513,17 @@ export default class Display {
     drawImage(img, x, y) {
         this._drawCtx.drawImage(img, x, y);
         this._damage(x, y, img.width, img.height);
+    }
+
+    drawVideoFrame(video) {
+        if (!video.videoWidth || !video.videoHeight
+            || !this._fb_width || !this._fb_height) {
+            return false;
+        }
+
+        this._drawCtx.drawImage(video, 0, 0, this._fb_width, this._fb_height);
+        this._damage(0, 0, this._fb_width, this._fb_height);
+        return true;
     }
 
     autoscale(containerWidth, containerHeight, fit = FIT.BOTH) {

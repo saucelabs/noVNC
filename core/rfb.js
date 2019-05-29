@@ -12,6 +12,7 @@ import { decodeUTF8 } from './util/strings.js';
 import { dragThreshold } from './util/browser.js';
 import EventTargetMixin from './util/eventtarget.js';
 import Display from "./display.js";
+import DummyDisplay from "./dummy-display.js";
 import Keyboard from "./input/keyboard.js";
 import Mouse from "./input/mouse.js";
 import Cursor from "./util/cursor.js";
@@ -55,6 +56,7 @@ export default class RFB extends EventTargetMixin {
         this._repeaterID = options.repeaterID || '';
         this._showDotCursor = options.showDotCursor || false;
         this._customKeySymMappings = options.customKeySymMappings || {}; // used to fix keymappings in case source and target os are different or the vnc server doesn't map properly
+        this._videoSource = options.videoSource || null;
 
         // Internal state
         this._rfb_connection_state = '';
@@ -203,6 +205,7 @@ export default class RFB extends EventTargetMixin {
         this._display.onframechange = this._handleFrameChange.bind(this);
         this._display.onflush = this._onFlush.bind(this);
         this._display.clear();
+        this._dummyDisplay = new DummyDisplay();
 
         this._keyboard = new Keyboard(this._textarea);
         this._keyboard.onkeyevent = this._handleKeyEvent.bind(this);
@@ -342,6 +345,20 @@ export default class RFB extends EventTargetMixin {
 
     get fps() { return this._performanceInfo.fps; }
 
+    get videoSource() { return this._videoSource; }
+    set videoSource(value) {
+        if (value === this._videoSource) {
+            return;
+        }
+
+        this._videoSource = value;
+        if (value) {
+            this._syncVideoSource();
+        } else if (this._rfb_connection_state === 'connected') {
+            RFB.messages.fbUpdateRequest(this._sock, false, 0, 0, this._fb_width, this._fb_height);
+        }
+    }
+
     // ===== PUBLIC METHODS =====
 
     disconnect() {
@@ -428,6 +445,28 @@ export default class RFB extends EventTargetMixin {
 
     // ===== PRIVATE METHODS =====
 
+    _syncVideoSource() {
+        if (!this.videoSource || this._rfb_connection_state === 'disconnected') {
+            return;
+        }
+
+        if (this._rfb_connection_state === 'connected') {
+            if (this.videoSource.readyState >= 4) {
+                if (this._display.drawVideoFrame(this.videoSource)) {
+                    this._display.flip();
+                    this._recentFrameTimestamp = window.performance.now();
+                }
+            } else {
+                // Kick VNC framebuffer is the video source is not available for more than 1000ms
+                if (this._recentFrameTimestamp && window.performance.now() - this._recentFrameTimestamp >= 1000) {
+                    RFB.messages.fbUpdateRequest(this._sock, false, 0, 0, this._fb_width, this._fb_height);
+                    this._recentFrameTimestamp = null;
+                }
+            }
+        }
+        window.requestAnimationFrame(() => this._syncVideoSource());
+    }
+
     _handlePasteEvent(e) {
         if (this._rfb_connection_state !== 'connected' || this._viewOnly) { return; }
         this.clipboardPasteFrom(e.text);
@@ -462,6 +501,10 @@ export default class RFB extends EventTargetMixin {
         // Always grab focus on some kind of click event
         this._canvas.addEventListener("mousedown", this._eventHandlers.focusCanvas);
         this._canvas.addEventListener("touchstart", this._eventHandlers.focusCanvas);
+
+        if (this.videoSource) {
+            this._syncVideoSource();
+        }
 
         Log.Debug("<< RFB.connect");
     }
@@ -1467,13 +1510,16 @@ export default class RFB extends EventTargetMixin {
             msg_type = this._sock.rQshift8();
         }
 
+        const useDummyDisplay = !!(this.videoSource && this.videoSource.readyState >= 4
+            && this.videoSource.videoWidth && this.videoSource.videoHeight);
         let first, ret;
         switch (msg_type) {
             case 0:  // FramebufferUpdate
-                ret = this._framebufferUpdate();
+                ret = this._framebufferUpdate(useDummyDisplay);
                 if (ret && !this._enabledContinuousUpdates) {
                     RFB.messages.fbUpdateRequest(this._sock, true, 0, 0,
-                                                 this._fb_width, this._fb_height);
+                                                 useDummyDisplay ? 0 : this._fb_width,
+                                                 useDummyDisplay ? 0 : this._fb_height);
                 }
                 return ret;
 
@@ -1525,7 +1571,7 @@ export default class RFB extends EventTargetMixin {
         }
     }
 
-    _framebufferUpdate() {
+    _framebufferUpdate(useDummyDisplay = false) {
         if (this._FBU.rects === 0) {
             if (this._sock.rQwait("FBU header", 3, 1)) { return false; }
             this._sock.rQskipBytes(1);  // Padding
@@ -1554,7 +1600,7 @@ export default class RFB extends EventTargetMixin {
                                               (hdr[10] << 8) + hdr[11], 10);
             }
 
-            if (!this._handleRect()) {
+            if (!this._handleRect(useDummyDisplay)) {
                 return false;
             }
 
@@ -1562,7 +1608,7 @@ export default class RFB extends EventTargetMixin {
             this._FBU.encoding = null;
         }
 
-        this._display.flip();
+        (useDummyDisplay ? this._dummyDisplay : this._display).flip();
 
         return true;  // We finished this FBU
     }
@@ -1581,7 +1627,7 @@ export default class RFB extends EventTargetMixin {
         this._performanceInfo.lastTimestamp = timestampSeconds;
     }
 
-    _handleRect() {
+    _handleRect(useDummyDisplay = false) {
         switch (this._FBU.encoding) {
             case encodings.pseudoEncodingLastRect:
                 this._FBU.rects = 1; // Will be decreased when we return
@@ -1610,7 +1656,7 @@ export default class RFB extends EventTargetMixin {
                 return this._handleExtendedDesktopSize();
 
             default:
-                return this._handleDataRect();
+                return this._handleDataRect(useDummyDisplay);
         }
     }
 
@@ -1726,7 +1772,7 @@ export default class RFB extends EventTargetMixin {
         return true;
     }
 
-    _handleDataRect() {
+    _handleDataRect(useDummyDisplay = false) {
         let decoder = this._decoders[this._FBU.encoding];
         if (!decoder) {
             this._fail("Unsupported encoding (encoding: " +
@@ -1737,7 +1783,7 @@ export default class RFB extends EventTargetMixin {
         try {
             return decoder.decodeRect(this._FBU.x, this._FBU.y,
                                       this._FBU.width, this._FBU.height,
-                                      this._sock, this._display,
+                                      this._sock, useDummyDisplay ? this._dummyDisplay : this._display,
                                       this._fb_depth);
         } catch (err) {
             this._fail("Error decoding rect: " + err);

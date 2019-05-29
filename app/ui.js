@@ -1011,11 +1011,21 @@ const UI = {
         }
         url += '/' + path;
 
+        // // https://stackoverflow.com/questions/4429440/html5-display-video-inside-canvas/38711016
+        // const videoSource = document.createElement("video");
+        // // https://gist.github.com/jsturgis/3b19447b304616f18657
+        // videoSource.src = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+        // videoSource.autoPlay = true;
+        // videoSource.loop = true;
+        // videoSource.muted = true;
+        // videoSource.oncanplay = () => videoSource.play();
+
         UI.rfb = new RFB(document.getElementById('noVNC_container'), url,
                          { shared: UI.getSetting('shared'),
                            showDotCursor: UI.getSetting('show_dot'),
                            repeaterID: UI.getSetting('repeaterID'),
-                           credentials: { password: password } });
+                           credentials: { password },
+                         });
         UI.rfb.addEventListener("connect", UI.connectFinished);
         UI.rfb.addEventListener("disconnect", UI.disconnectFinished);
         UI.rfb.addEventListener("credentialsrequired", UI.credentials);
@@ -1027,6 +1037,17 @@ const UI = {
         UI.rfb.clipViewport = UI.getSetting('view_clip');
         UI.rfb.scaleViewport = UI.getSetting('resize') === 'scale';
         UI.rfb.resizeSession = UI.getSetting('resize') === 'remote';
+
+        // function switchSource() {
+        //     if (!UI.rfb) return;
+        //     if (UI.rfb.videoSource) {
+        //         UI.rfb.videoSource = null;
+        //     } else {
+        //         UI.rfb.videoSource = videoSource;
+        //     }
+        //     setTimeout(() => switchSource(), 5000);
+        // }
+        // setTimeout(() => switchSource(), 5000);
 
         UI.updateViewOnly(); // requires UI.rfb
     },
