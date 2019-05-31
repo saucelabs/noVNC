@@ -32,6 +32,16 @@ export default class DummyDisplay {
 
     flip() {}
 
+    clear() {}
+
+    pending() {
+        return false;
+    }
+
+    flush() {}
+
+    fillRect() {}
+
     copyImage() {}
 
     imageRect() {}
